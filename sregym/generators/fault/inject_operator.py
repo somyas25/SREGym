@@ -4,6 +4,7 @@ import yaml
 
 from sregym.generators.fault.base import FaultInjector
 from sregym.service.kubectl import KubeCtl
+from kubernetes import client, config
 
 
 class K8SOperatorFaultInjector(FaultInjector):
@@ -232,6 +233,93 @@ class K8SOperatorFaultInjector(FaultInjector):
     def recover_non_existent_storage(self):
         self.recover_fault("non-existent-storage-fault")
 
+    def inject_wrong_operator_image(self):
+        """
+        Fault: Replaces the operator pod image with a typo-version to trigger ImagePullBackOff.
+        """
+        import subprocess
+
+        # 1. Get the dynamic pod name and container name from the namespace
+        # We use kubectl here because Pod names are not static like the 'basic' TidbCluster name
+        try:
+            pod_name = subprocess.getoutput("kubectl get pods -n tidb-operator -o jsonpath='{.items[0].metadata.name}'")
+            container_name = subprocess.getoutput(f"kubectl get pod {pod_name} -n tidb-operator -o jsonpath='{{.spec.containers[0].name}}'")
+        except Exception as e:
+            print(f"Failed to retrieve pod info: {e}")
+            return
+
+        # 2. Define the fault manifest as a python dict
+        cr_name = "wrong-operator-image-fault"
+        pod_yaml = {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "name": pod_name,
+                "namespace": "tidb-operator"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "name": container_name,
+                        "image": "pingcap/tidb-operatorr:v1.6.3" # Typo in 'operatorr'
+                    }
+                ]
+            }
+        }
+
+        # 3. Apply the fault using your internal helper
+        yaml_path = f"/tmp/{cr_name}.yaml"
+        with open(yaml_path, "w") as file:
+            yaml.dump(pod_yaml, file)
+
+        command = f"kubectl apply -f {yaml_path} -n tidb-operator"
+        print(f"Namespace: {self.namespace}")
+        result = self.kubectl.exec_command(command)
+        print(f"Injected {cr_name}: {result}")
+
+
+    def recover_wrong_operator_image(self):
+        import subprocess
+
+        # 1. Get the dynamic pod name and container name from the namespace
+        # We use kubectl here because Pod names are not static like the 'basic' TidbCluster name
+        try:
+            pod_name = subprocess.getoutput("kubectl get pods -n tidb-operator -o jsonpath='{.items[0].metadata.name}'")
+            container_name = subprocess.getoutput(f"kubectl get pod {pod_name} -n tidb-operator -o jsonpath='{{.spec.containers[0].name}}'")
+        except Exception as e:
+            print(f"Failed to retrieve pod info: {e}")
+            return
+
+        # 2. Define the fault manifest as a python dict
+        cr_name = "recover-wrong-operator-image-fault"
+        pod_yaml = {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "name": pod_name,
+                "namespace": "tidb-operator"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "name": container_name,
+                        "image": "pingcap/tidb-operator:v1.6.3"
+                    }
+                ]
+            }
+        }
+
+        # 3. Apply the fault using your internal helper
+        yaml_path = f"/tmp/{cr_name}.yaml"
+        with open(yaml_path, "w") as file:
+            yaml.dump(pod_yaml, file)
+
+        command = f"kubectl apply -f {yaml_path} -n tidb-operator"
+        print(f"Namespace: {self.namespace}")
+        result = self.kubectl.exec_command(command)
+        print(f"Injected {cr_name}: {result}")
+
+
     def recover_fault(self, cr_name: str):
         self._delete_yaml(cr_name)
         clean_url = "https://raw.githubusercontent.com/pingcap/tidb-operator/v1.6.0/examples/basic/tidb-cluster.yaml"
@@ -244,6 +332,6 @@ if __name__ == "__main__":
     namespace = "tidb-cluster"
     tidb_fault_injector = K8SOperatorFaultInjector(namespace)
 
-    tidb_fault_injector.inject_overload_replicas()
+    tidb_fault_injector.inject_wrong_operator_image()
     time.sleep(10)
-    tidb_fault_injector.recover_overload_replicas()
+    tidb_fault_injector.recover_wrong_operator_image()
