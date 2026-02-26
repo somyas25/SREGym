@@ -11,6 +11,13 @@
 [![Slack](https://img.shields.io/badge/-Slack-4A154B?style=flat-square&logo=slack&logoColor=white)](https://join.slack.com/t/SREGym/shared_invite/zt-3gvqxpkpc-RvCUcyBEMvzvXaQS9KtS_w)
 </div>
 
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=mmpW36WdFbI&t=37m30s">
+    <img src="https://img.youtube.com/vi/mmpW36WdFbI/maxresdefault.jpg" alt="SREGym Demo Video" width="600">
+  </a>
+  <p><em>About SREGym</em></p>
+</div>
+
 <h2 id="overview">🔍 Overview</h2>
 SREGym is an AI-native platform to enable the design, development, and evaluation of AI agents for Site Reliability Engineering (SRE). The core idea is to create live system environments for SRE agents to solve real-world SRE problems. SREGym provides a comprehensive SRE benchmark suite with a wide variety of problems for evaluating SRE agents and also for training next-generation AI agents.
 <br><br>
@@ -112,18 +119,15 @@ python main.py --agent <agent-name> --model <model-id>
 
 | Model ID | Provider | Model Name | Required Environment Variables |
 |----------|----------|------------|-------------------------------|
-| `gpt-4o` | OpenAI | GPT-4o | `OPENAI_API_KEY` |
+| `gpt-5` | OpenAI | GPT-5 | `OPENAI_API_KEY` |
 | `gemini-2.5-pro` | Google | Gemini 2.5 Pro | `GEMINI_API_KEY` |
 | `claude-sonnet-4` | Anthropic | Claude Sonnet 4 | `ANTHROPIC_API_KEY` |
 | `bedrock-claude-sonnet-4.5` | AWS Bedrock | Claude Sonnet 4.5 | `AWS_PROFILE`, `AWS_DEFAULT_REGION` |
-| `moonshot` | Moonshot | Moonshot | `MOONSHOT_API_KEY` |
-| `watsonx-llama` | IBM watsonx | Llama 3.3 70B | `WATSONX_API_KEY`, `WX_PROJECT_ID` |
-| `glm-4` | GLM | GLM-4 | `GLM_API_KEY` |
-| `azure-openai-gpt-4o` | Azure OpenAI | GPT-4o | `AZURE_API_KEY`, `AZURE_API_BASE` |
 
 **Default:** If no model is specified, `gpt-4o` is used by default.
 
-#### Examples
+<details>
+<summary><strong>Provider Examples</strong></summary>
 
 **OpenAI:**
 ```bash
@@ -154,6 +158,8 @@ python main.py --agent stratus --model bedrock-claude-sonnet-4.5
 ```
 
 **Note:** For AWS Bedrock, ensure your AWS credentials are configured via `~/.aws/credentials` and your profile has permissions to access Bedrock.
+
+</details>
 
 ## Acknowledgements
 This project is generously supported by a Slingshot grant from the [Laude Institute](https://www.laude.org/).
